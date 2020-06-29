@@ -1,10 +1,8 @@
 import requests
 import logging
 import time
-import tkinter as tk
 from pandas import DataFrame
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from var_dump import var_dump
 from datetime import datetime
 from matplotlib.animation import FuncAnimation
@@ -86,7 +84,6 @@ def update_chart(i):
         prices['Hour'].append(item['time'])
 
 
-  # var_dump(prices)
 
   prices = DataFrame(prices)
 
@@ -98,34 +95,15 @@ def update_chart(i):
 
   plt.legend()
 
-  time.sleep(5)
+  if i != 0:
+    time.sleep(5)
 
+plt.rcParams["figure.figsize"] = [16,9]
 
+figure = plt.gcf()
+figure.canvas.set_window_title('Crypto Currencies')
 
-ani = FuncAnimation(plt.gcf(), update_chart, 1000)
-
+ani = FuncAnimation(figure, update_chart, 1000)
 
 plt.tight_layout()
 plt.show()
-
-# root = tk.Tk()
-
-# OPTIONS = [
-#   "Jan",
-#   "Feb",
-#   "Mar"
-# ] #etc
-
-# variable = tk.StringVar(root)
-# variable.set(OPTIONS[0]) # default value
-
-# w = tk.OptionMenu(root, variable, *OPTIONS)
-# w.pack()
-
-# def ok():
-#     print ("value is:" + variable.get())
-
-# button = tk.Button(root, text="OK", command=ok)
-# button.pack()
-
-# root.mainloop()
