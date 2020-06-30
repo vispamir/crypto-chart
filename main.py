@@ -1,13 +1,41 @@
 import requests
 import logging
 import time
+from tkinter import *
 from pandas import DataFrame
 import matplotlib.pyplot as plt
 from var_dump import var_dump
 from datetime import datetime
 from matplotlib.animation import FuncAnimation
 
-plt.style.use('fivethirtyeight')
+
+class Checkbar(Frame):
+
+  def __init__(self, parent=None, picks=[], side=LEFT, anchor=W):
+    Frame.__init__(self, parent)
+    self.vars = []
+    for pick in picks:
+      var = IntVar()
+      chk = Checkbutton(self, text=pick, variable=var)
+      chk.pack(side=side)
+      self.vars.append(var)
+
+  def state(self):
+    return map((lambda var: var.get()), self.vars)
+
+app = Tk()
+
+app.title('Crypto Currencies')
+app.geometry("500x200")
+
+OPTIONS = {
+  'LINK': 'LINK',
+  'ETC': 'ETC',
+  'EOS': 'EOS',
+}
+
+currecies = Checkbar(app, OPTIONS)
+currecies.pack()
 
 
 def fetch_data(symbol):
@@ -41,7 +69,7 @@ def fetch_data(symbol):
   # extracting data in json format 
   data = r.json()
 
-  var_dump(data)
+  # var_dump(data)
 
   return data 
 
@@ -67,43 +95,59 @@ def update_chart(i):
 
   prices = {
     'Hour': [],
-    'LINK': [],
-    'ETC': [],
-    'EOS': [],
   }
 
+  selected_currencies = list(currecies.state())
+
+  row = 0
+
   for key, symbol in enumerate(symbols, start=0):
-    data = fetch_data(symbol['name'])
-    for index, item in enumerate(data['Data'], start=0):
 
-      prices[symbol['name']].append(item['volume'])
+    if selected_currencies[key] == 1:
+      prices[symbol['name']] = []
 
-      if key == 0:
-        updatedAt = datetime.fromtimestamp(item['time'])
-        item['time'] = updatedAt.strftime("%H:%M")
-        prices['Hour'].append(item['time'])
+      row = row + 1
 
+      data = fetch_data(symbol['name'])
 
+      for index, item in enumerate(data['Data'], start=0):
 
+        prices[symbol['name']].append(item['volume'])
+
+        if row == 1:
+          updatedAt = datetime.fromtimestamp(item['time'])
+          item['time'] = updatedAt.strftime("%H:%M")
+          prices['Hour'].append(item['time'])
+  
   prices = DataFrame(prices)
-
 
   plt.cla()
 
-  for symbol in symbols:
-    plt.plot( 'Hour', symbol['name'], data=prices, marker='o', markerfacecolor=symbol['markerfacecolor'], markersize=12, color=symbol['color'], linewidth=4)
+  for key, symbol in enumerate(symbols, start=0):
+    if selected_currencies[key] == 1:
+      plt.plot( 'Hour', symbol['name'], data=prices, marker='o', markerfacecolor=symbol['markerfacecolor'], markersize=12, color=symbol['color'], linewidth=4)
 
   plt.legend()
 
   if i != 0:
     time.sleep(5)
 
-plt.rcParams["figure.figsize"] = [16,9]
 
-figure = plt.gcf()
-figure.canvas.set_window_title('Crypto Currencies')
+def display_chart():
+  plt.style.use('fivethirtyeight')
 
-ani = FuncAnimation(figure, update_chart, 1000)
+  plt.rcParams["figure.figsize"] = [16,9]
 
-plt.tight_layout()
-plt.show()
+  figure = plt.gcf()
+  figure.canvas.set_window_title('Crypto Currencies')
+
+  ani = FuncAnimation(figure, update_chart, 1000)
+
+  plt.tight_layout()
+  plt.show()
+
+
+button = Button(app, text="Create Chart", command=display_chart)
+button.pack()
+
+app.mainloop()
